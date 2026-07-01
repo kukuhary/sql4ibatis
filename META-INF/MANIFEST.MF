@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Sql4ibatis
+Bundle-SymbolicName: sql4ibatis;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: sql4ibatis.Activator
+Automatic-Module-Name: sql4ibatis
+Require-Bundle: org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.jface.text,
+ org.eclipse.ui.workbench.texteditor,
+ org.eclipse.ui.editors,
+ org.eclipse.core.resources
+Import-Package: java.sql
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Bundle-ActivationPolicy: lazy

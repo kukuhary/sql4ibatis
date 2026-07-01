@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <!-- 1단계: 설정 화면 확장점 정의 -->
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            class="sql4ibatis.preferences.DatabasePreferencePage"
+            id="sql4ibatis.preferences.DatabasePreferencePage"
+            name="iBATIS SQL Executor">
+      </page>
+   </extension>
+
+   <!-- 2단계: 단축키 기능 (Alt+Q) 구현을 위한 커맨드, 핸들러, 바인딩 확장점 정의 -->
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            id="sql4ibatis.commands.runQuery"
+            name="Run iBATIS Query">
+      </command>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.handlers">
+      <handler
+            class="sql4ibatis.handlers.RunQueryHandler"
+            commandId="sql4ibatis.commands.runQuery">
+      </handler>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="sql4ibatis.commands.runQuery"
+            contextId="org.eclipse.ui.textEditorScope"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="ALT+Q">
+      </key>
+   </extension>
+
+   <!-- 4단계: 결과 출력 뷰 (View) 확장점 정의 (카테고리 지정) -->
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            id="sql4ibatis"
+            name="iBATIS SQL Executor">
+      </category>
+      <view
+            category="sql4ibatis"
+            class="sql4ibatis.views.QueryResultView"
+            id="sql4ibatis.views.QueryResultView"
+            name="Query Result View"
+            restorable="true">
+      </view>
+   </extension>
+</plugin>

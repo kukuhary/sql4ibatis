@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Mon Feb 17 11:21:55 KST 2014-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="sbzMstMngService">
+    <select id="searchSpaceMst" resultType="sms.sbz.space.mst.dto.SbzMstMngResDto" parameterType="sms.sbz.space.mst.dto.SbzMstMngSearchReqDto">
+        SELECT /*  [sbzMstMngService.sqlx][searchSpaceMst][공간마스터 조회][sephilos][2024.04.16] */
+                MST.SBZ_MST_NO
+            ,	MST.SBZ_MST_NM
+            ,	MST.BZPLC_TYP_CD
+            ,   FN_COM_CDVAL_NM(MST.CO_CD, 'BZPLC_TYP_CD', MST.BZPLC_TYP_CD) AS BZPLC_TYP_CD_NM
+            ,	MST.PRDTYP_CD
+            ,	MST.DSCLMR_YN
+            ,	MST.CHKIN_YN
+            ,	MST.USE_YN
+            ,	MST.CRER_NO
+            ,	TO_CHAR(MST.CRE_DT, 'YYYY-MM-DD') AS CRE_DT
+            ,	UPDR_NO
+            ,	TO_CHAR(MST.UPD_DT, 'YYYY-MM-DD') AS UPD_DT
+        FROM SBZ_MST MST
+        WHERE MST.CO_CD = #{coCd}
+            <if test='sbzMstNm != null and !sbzMstNm.isEmpty()'>
+                AND UPPER(MST.SBZ_MST_NM) LIKE '%' || UPPER(#{sbzMstNm}) || '%'
+            </if>
+            <if test='bzplcTypCd != null and !bzplcTypCd.isEmpty()'>
+                AND MST.BZPLC_TYP_CD = #{bzplcTypCd}
+            </if>
+            <if test='prdtypCd != null and !prdtypCd.isEmpty()'>
+                AND MST.PRDTYP_CD = #{prdtypCd}
+            </if>
+            <if test='useYn != null and !useYn.isEmpty() and useYn == "Y"'>
+                AND MST.USE_YN = #{useYn}
+            </if>
+        ORDER BY MST.SBZ_MST_NO DESC
+    </select>
+
+    <insert id="insertSpaceMst" parameterType="sms.sbz.space.mst.entity.SbzMstMngEntity">
+        INSERT /*  [sbzMstMngService.sqlx][insertSpaceMst][공간마스터 등록][sephilos][2024.04.16] */
+        INTO SBZ_MST
+                (   CO_CD
+                 ,	SBZ_MST_NO
+                 ,	SBZ_MST_NM
+                 ,	BZPLC_TYP_CD
+                 ,	PRDTYP_CD
+                 ,	DSCLMR_YN
+                 ,	CHKIN_YN
+                 ,	USE_YN
+                 ,	CRER_NO
+                 ,	CRE_DT
+                 ,	UPDR_NO
+                 ,	UPD_DT
+        ) VALUES (	#{coCd}
+                ,   ${SBZ_MST_NO}
+                ,	#{sbzMstNm}
+                ,	#{bzplcTypCd}
+                ,	#{prdtypCd}
+                ,	#{dsclmrYn}
+                ,	#{chkinYn}
+                ,	#{useYn}
+                ,	#{crerNo}
+                ,	SYSDATE
+                ,	#{updrNo}
+                ,	SYSDATE)
+    </insert>
+
+    <update id="updateSpaceMst" parameterType="sms.sbz.space.mst.entity.SbzMstMngEntity">
+        UPDATE 	/*  [sbzMstMngService.sqlx][updateSpaceMst][공간마스터 수정][sephilos][2024.04.16] */
+            SBZ_MST
+        SET SBZ_MST_NM = #{sbzMstNm}
+        ,	BZPLC_TYP_CD = #{bzplcTypCd}
+        ,	PRDTYP_CD = #{prdtypCd}
+        ,	DSCLMR_YN = #{dsclmrYn}
+        ,	CHKIN_YN = #{chkinYn}
+        ,	USE_YN = #{useYn}
+        ,	UPDR_NO = #{updrNo}
+        ,	UPD_DT = SYSDATE
+        WHERE CO_CD = #{coCd} AND SBZ_MST_NO = #{sbzMstNo}
+    </update>
+
+    <update id="deleteSpaceMst" parameterType="sms.sbz.space.mst.entity.SbzMstMngEntity">
+        UPDATE 	/*  [sbzMstMngService.sqlx][deleteSpaceMst][공간마스터 삭제(사용여부 N)][sephilos][2024.04.16] */
+            SBZ_MST
+        SET USE_YN = 'N'
+        ,	UPDR_NO = #{updrNo}
+        ,	UPD_DT = SYSDATE
+        WHERE CO_CD = #{coCd}  AND SBZ_MST_NO = #{sbzMstNo}
+    </update>
+
+</mapper>
