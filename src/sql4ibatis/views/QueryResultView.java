@@ -53,6 +53,10 @@ public class QueryResultView extends ViewPart {
 		table = new Table(sashForm, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
+		
+		Color headerBg = new Color(table.getDisplay(), 240, 240, 240);
+		table.setHeaderBackground(headerBg);
+		table.addDisposeListener(e -> headerBg.dispose());
 
 		// Capture mouse click coordinates to determine the target cell index
 		table.addMouseListener(new MouseAdapter() {
