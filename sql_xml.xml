@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Mon Feb 17 11:21:55 KST 2014-->
-<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
-"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="sbzMstMngService">
-    <select id="searchSpaceMst" resultType="sms.sbz.space.mst.dto.SbzMstMngResDto" parameterType="sms.sbz.space.mst.dto.SbzMstMngSearchReqDto">
-        select * from dual
-     </select>
-
-</mapper>
