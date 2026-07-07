@@ -55,11 +55,20 @@ public class QueryResultView extends ViewPart {
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		
-		grayColor = new Color(table.getDisplay(), 240, 240, 240);
+		grayColor = new Color(table.getDisplay(), 220, 220, 220);
 		table.setHeaderBackground(grayColor);
 		table.addDisposeListener(e -> {
 			if (grayColor != null && !grayColor.isDisposed()) {
 				grayColor.dispose();
+			}
+		});
+
+		// Custom owner draw background for column 0 (NO column) to fully fill cell backgrounds
+		table.addListener(SWT.EraseItem, event -> {
+			if (event.index == 0 && grayColor != null && !grayColor.isDisposed()) {
+				event.gc.setBackground(grayColor);
+				event.gc.fillRectangle(event.x, event.y, event.width, event.height);
+				event.detail &= ~SWT.BACKGROUND;
 			}
 		});
 
