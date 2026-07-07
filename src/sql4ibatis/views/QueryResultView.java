@@ -35,6 +35,7 @@ public class QueryResultView extends ViewPart {
 	private Text sqlText;
 	
 	private int lastClickedColumnIndex = -1;
+	private Color grayColor;
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -54,9 +55,13 @@ public class QueryResultView extends ViewPart {
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 		
-		Color headerBg = new Color(table.getDisplay(), 240, 240, 240);
-		table.setHeaderBackground(headerBg);
-		table.addDisposeListener(e -> headerBg.dispose());
+		grayColor = new Color(table.getDisplay(), 240, 240, 240);
+		table.setHeaderBackground(grayColor);
+		table.addDisposeListener(e -> {
+			if (grayColor != null && !grayColor.isDisposed()) {
+				grayColor.dispose();
+			}
+		});
 
 		// Capture mouse click coordinates to determine the target cell index
 		table.addMouseListener(new MouseAdapter() {
@@ -192,6 +197,9 @@ public class QueryResultView extends ViewPart {
 					TableItem item = new TableItem(table, SWT.NONE);
 					if (hasNoColumn) {
 						item.setText(0, String.valueOf(rowIndex++));
+						if (grayColor != null && !grayColor.isDisposed()) {
+							item.setBackground(0, grayColor);
+						}
 					}
 					
 					int colSize = rowData.size();
