@@ -205,7 +205,7 @@ public class ParameterInputDialog extends Dialog {
 			Button quoteBtn = quoteButtons.get(param);
 			if (text != null) {
 				String plainText = text.getText().trim();
-				if (quoteBtn != null && quoteBtn.getSelection()) {
+				if (quoteBtn != null && quoteBtn.getSelection() && !plainText.isEmpty()) {
 					values.put(param, "'" + plainText + "'");
 				} else {
 					values.put(param, plainText);

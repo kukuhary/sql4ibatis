@@ -389,31 +389,42 @@ public class SqlParser {
 		return finalResult;
 	}
 
+	private static String getCleanValue(String varName, Map<String, String> values) {
+		String val = values.get(varName);
+		if (val == null) {
+			return null;
+		}
+		if (val.startsWith("'") && val.endsWith("'")) {
+			return val.substring(1, val.length() - 1);
+		}
+		return val;
+	}
+
 	/**
 	 * Evaluates a single condition expression.
 	 */
 	private static boolean evaluateSingleCondition(String part, Map<String, String> values) {
 		if (part.contains("!= null") || part.contains("!=null")) {
 			String varName = part.split("!=")[0].trim();
-			String val = values.get(varName);
+			String val = getCleanValue(varName, values);
 			return val != null && !val.isEmpty();
 		}
 		
 		if (part.contains("== null") || part.contains("==null")) {
 			String varName = part.split("==")[0].trim();
-			String val = values.get(varName);
+			String val = getCleanValue(varName, values);
 			return val == null || val.isEmpty();
 		}
 		
 		if (part.startsWith("!") && part.contains(".isEmpty()")) {
 			String varName = part.substring(1, part.indexOf(".isEmpty()")).trim();
-			String val = values.get(varName);
+			String val = getCleanValue(varName, values);
 			return val != null && !val.isEmpty();
 		}
 		
 		if (!part.startsWith("!") && part.contains(".isEmpty()")) {
 			String varName = part.substring(0, part.indexOf(".isEmpty()")).trim();
-			String val = values.get(varName);
+			String val = getCleanValue(varName, values);
 			return val == null || val.isEmpty();
 		}
 		
@@ -421,7 +432,7 @@ public class SqlParser {
 			String[] split = part.split("==");
 			String varName = split[0].trim();
 			String compareVal = split[1].trim().replace("\"", "").replace("'", "");
-			String actualVal = values.get(varName);
+			String actualVal = getCleanValue(varName, values);
 			return compareVal.equals(actualVal);
 		}
 		
@@ -429,7 +440,7 @@ public class SqlParser {
 			String[] split = part.split("!=");
 			String varName = split[0].trim();
 			String compareVal = split[1].trim().replace("\"", "").replace("'", "");
-			String actualVal = values.get(varName);
+			String actualVal = getCleanValue(varName, values);
 			return !compareVal.equals(actualVal);
 		}
 		
