@@ -167,7 +167,14 @@ public class QueryResultView extends ViewPart {
 			table.removeAll();
 			lastClickedColumnIndex = -1;
 
+			boolean hasNoColumn = (headers != null);
+
 			if (headers != null) {
+				// Prepend Row Number ("NO") column
+				TableColumn noCol = new TableColumn(table, SWT.CENTER);
+				noCol.setText("NO");
+				noCol.setWidth(50);
+
 				for (String header : headers) {
 					TableColumn col = new TableColumn(table, SWT.LEFT);
 					col.setText(header);
@@ -180,18 +187,24 @@ public class QueryResultView extends ViewPart {
 				// Get standard soft system yellow color (COLOR_INFO_BACKGROUND) for highlights
 				Color yellowColor = table.getDisplay().getSystemColor(SWT.COLOR_INFO_BACKGROUND);
 
+				int rowIndex = 1;
 				for (List<String> rowData : rows) {
 					TableItem item = new TableItem(table, SWT.NONE);
+					if (hasNoColumn) {
+						item.setText(0, String.valueOf(rowIndex++));
+					}
+					
 					int colSize = rowData.size();
 					for (int j = 0; j < colSize; j++) {
 						String val = rowData.get(j);
+						int tableColIndex = hasNoColumn ? (j + 1) : j;
 						
 						// Determine if the value represents a database NULL
 						if (val == null || "NULL".equalsIgnoreCase(val.trim())) {
-							item.setText(j, ""); // Keep text empty
-							item.setBackground(j, yellowColor); // Highlight the cell background
+							item.setText(tableColIndex, ""); // Keep text empty
+							item.setBackground(tableColIndex, yellowColor); // Highlight the cell background
 						} else {
-							item.setText(j, val);
+							item.setText(tableColIndex, val);
 						}
 					}
 				}
