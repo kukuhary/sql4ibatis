@@ -53,7 +53,11 @@ public class SqlParser {
 				String sqlFragment = findSqlFragment(refId, xmlText, xmlContentsMap);
 				
 				if (sqlFragment != null) {
-					m.appendReplacement(sb, Matcher.quoteReplacement(sqlFragment));
+					// Mark the start and end of the resolved include block with comments
+					String markedFragment = "\n/* -- INCLUDE START: " + refId + " -- */\n" 
+							+ sqlFragment 
+							+ "\n/* -- INCLUDE END: " + refId + " -- */\n";
+					m.appendReplacement(sb, Matcher.quoteReplacement(markedFragment));
 					found = true;
 				} else {
 					m.appendReplacement(sb, Matcher.quoteReplacement(m.group(0)));
@@ -111,6 +115,17 @@ public class SqlParser {
 		}
 		return null;
 	}
+	private static boolean isTargetTag(String sub, String tagName) {
+		if (!sub.startsWith("<" + tagName)) {
+			return false;
+		}
+		int len = tagName.length() + 1; // Length of "<" + tagName
+		if (sub.length() <= len) {
+			return true;
+		}
+		char nextChar = sub.charAt(len);
+		return Character.isWhitespace(nextChar) || nextChar == '>';
+	}
 
 	/**
 	 * Extracts raw SQL statements by backtracking query tags from the current cursor offset in XML text.
@@ -122,13 +137,13 @@ public class SqlParser {
 		for (int i = offset; i >= 0; i--) {
 			if (i < xmlText.length() && xmlText.charAt(i) == '<') {
 				String sub = xmlText.substring(i);
-				if (sub.startsWith("<select") || sub.startsWith("<insert") || sub.startsWith("<update") || sub.startsWith("<delete") || sub.startsWith("<sql")) {
+				if (isTargetTag(sub, "select") || isTargetTag(sub, "insert") || isTargetTag(sub, "update") || isTargetTag(sub, "delete") || isTargetTag(sub, "sql")) {
 					startTagPos = i;
-					if (sub.startsWith("<select")) tagType = "select";
-					else if (sub.startsWith("<insert")) tagType = "insert";
-					else if (sub.startsWith("<update")) tagType = "update";
-					else if (sub.startsWith("<delete")) tagType = "delete";
-					else if (sub.startsWith("<sql")) tagType = "sql";
+					if (isTargetTag(sub, "select")) tagType = "select";
+					else if (isTargetTag(sub, "insert")) tagType = "insert";
+					else if (isTargetTag(sub, "update")) tagType = "update";
+					else if (isTargetTag(sub, "delete")) tagType = "delete";
+					else if (isTargetTag(sub, "sql")) tagType = "sql";
 					break;
 				}
 			}
@@ -177,13 +192,13 @@ public class SqlParser {
 		for (int i = offset; i >= 0; i--) {
 			if (i < xmlText.length() && xmlText.charAt(i) == '<') {
 				String sub = xmlText.substring(i);
-				if (sub.startsWith("<select") || sub.startsWith("<insert") || sub.startsWith("<update") || sub.startsWith("<delete") || sub.startsWith("<sql")) {
+				if (isTargetTag(sub, "select") || isTargetTag(sub, "insert") || isTargetTag(sub, "update") || isTargetTag(sub, "delete") || isTargetTag(sub, "sql")) {
 					startTagPos = i;
-					if (sub.startsWith("<select")) tagType = "select";
-					else if (sub.startsWith("<insert")) tagType = "insert";
-					else if (sub.startsWith("<update")) tagType = "update";
-					else if (sub.startsWith("<delete")) tagType = "delete";
-					else if (sub.startsWith("<sql")) tagType = "sql";
+					if (isTargetTag(sub, "select")) tagType = "select";
+					else if (isTargetTag(sub, "insert")) tagType = "insert";
+					else if (isTargetTag(sub, "update")) tagType = "update";
+					else if (isTargetTag(sub, "delete")) tagType = "delete";
+					else if (isTargetTag(sub, "sql")) tagType = "sql";
 					break;
 				}
 			}

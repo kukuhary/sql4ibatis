@@ -93,10 +93,9 @@ public class DbExecutor {
 				throw new InterruptedException("Query execution canceled by user.");
 			}
 
-			// 3. Execute SQL statement
-			monitor.subTask("Executing SQL query statement...");
-			String cleanSql = sql.trim().toLowerCase();
-			if (cleanSql.startsWith("select") || cleanSql.startsWith("with")) {
+			// Normalize SQL by stripping comments to accurately determine query type (Select vs DML)
+			String noCommentsSql = sql.replaceAll("/\\*[\\s\\S]*?\\*/", "").replaceAll("--.*", "").trim().toLowerCase();
+			if (noCommentsSql.startsWith("select") || noCommentsSql.startsWith("with")) {
 				rs = stmt.executeQuery(sql);
 				ResultSetMetaData metaData = rs.getMetaData();
 				int columnCount = metaData.getColumnCount();

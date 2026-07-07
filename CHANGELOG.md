@@ -64,6 +64,7 @@
    - MyBatis 쿼리 본문 내에 부등호 등을 표현하기 위해 `<![CDATA[...]]>` 구문이 포함되어 있을 때, 쿼리 전체가 그 CDATA 내용으로 오버라이팅되어 오발췌되던 파싱 엔진 버그를 전격 수정했습니다. 쿼리 껍데기 태그만 분리한 후 쿼리 내부의 모든 CDATA 태그를 언랩(Unwrap)하도록 패치하여 원본 SQL의 형상을 유지했습니다.
 14. **MyBatis <include> 태그 동적 해석 및 인라인 치환 (워크스페이스 교차 프로젝트 지원)**:
    - 쿼리 본문 내에 `<include refid="참조ID" />` 태그가 존재할 때, 현재 단일 프로젝트뿐만 아니라 **이클립스 워크스페이스에 열려있는 다른 모든 의존 프로젝트(Multi-project / Library 프로젝트) 내부의 XML 및 SQLX(`.sqlx`) 파일들까지 실시간 순회 스캔**하여, 일치하는 네임스페이스 및 SQL 구문 조각을 추적하고 본문에 인라인 대입 처리하는 고도화된 include 리졸버를 구축했습니다. 네임스페이스 경로 매칭을 자동 지원하며 중첩된 include(Nested include) 또한 최대 5단계까지 재귀 병합을 보장합니다.
+   - **(식별 마커 보강)** 하단 결과 뷰(`Executed SQL String`)에서 병합된 include의 출처를 쉽게 파악할 수 있도록 치환이 발생한 구문 영역 전후에 SQL 표준 주석(`/* -- INCLUDE START: 참조ID -- */`, `/* -- INCLUDE END: 참조ID -- */`)을 자동으로 각인하도록 설계했습니다.
 15. **MyBatis <choose>/<when>/<otherwise> 및 <foreach> 조건절 동적 평가 지원**:
    - MyBatis의 다중 조건 태그인 `<choose>`, `<when test="...">`, `<otherwise>` 구문을 논리 평가하여, 참인 조건의 분기문만 남겨두고 나머지는 자동 탈락시키는 동적 분기 해석기를 탑재했습니다. 또한 배열이나 컬렉션을 순회하는 `<foreach>` 태그의 껍데기를 날리고 내부 변수를 기저 수집 변수명으로 자동 환원해 주는 언랩(Unwrap) 변환 프로세스를 이식하여 오라클 SQL 동작성을 극대화했습니다.
 16. **프로젝트 내 XML/SQLX 탐색 시 ProgressMonitorDialog 프로그레시브 팝업 연동 및 최적화**:
@@ -85,6 +86,7 @@
 * **[SqlParser.java](file:///c:/mySts_work/sql4ibatis/src/sql4ibatis/utils/SqlParser.java)** (NEW):
   - iBATIS/MyBatis XML 구문 파싱, 물리적 변수 정렬 추출 및 MyBatis 동적 SQL `<if>` 표현식 계산/치환을 전담하는 파서 유틸리티 구현 및 Javadoc 영문화.
   - `extractQueryAtCursor` 및 `extractQueryId` 메서드 내에서 쿼리 검출 대상 식별자에 `<sql` 태그를 추가하여 공통 SQL 조각을 단독 수행 가능하도록 보강.
+  - **(중복 태그 충돌 버그 수정)** iBATIS의 최상위 태그인 `<sqlMap>`과 `<sql>`의 접두어 매칭 충돌로 인해 오작동(Alt+Q 단독 실행 오류)이 일어나던 현상을 해결하기 위해, 태그 뒤에 공백이나 `>`가 위치하는지 검증해주는 `isTargetTag` 단어 경계 헬퍼를 도입했습니다. 추가로, 복사/붙여넣기 된 코드에 섞여있는 유니코드 특수 공백(NBSP, 전각 공백 등) 또한 완벽히 공백으로 포괄할 수 있도록 `Character.isWhitespace()` 검증을 연동하여 태그 파싱의 안정성을 최종 확보했습니다.
   - `extractQueryAtCursor` 메서드 내에서 `<![CDATA[` 가 존재할 때 오발췌되던 버그를 껍데기 태그 선도려내기 후 내부 CDATA 태그 전체를 `replace` 언랩(Unwrap)하는 방식으로 대폭 수정 보완.
   - `<include refid="xxx">` 태그를 파싱하고 XML 문서 내의 `<sql id="xxx">` 내용으로 재귀적으로 치환하는 `resolveIncludes`, `findSqlFragment`, `extractSqlTagContent` 헬퍼 메서드 추가 구현.
   - `<choose>/<when>/<otherwise>` 다중 분기를 계산하여 참 조건 영역만 남기고 조율하는 `parseChooseSql` 및 `evaluateChooseBody` 메서드 신설.
@@ -92,12 +94,14 @@
   - `extractParameters` 에 `<when test="...">` 내 조건 변수들을 수집하는 정규식 스캐너 추가.
 * **[DbExecutor.java](file:///c:/mySts_work/sql4ibatis/src/sql4ibatis/utils/DbExecutor.java)** (NEW):
   - 동적 JDBC Driver ClassLoader 캐싱 관리, 커넥션 수립, 쿼리문 수행 및 자원 GC 클리닝 전담 기능 구현 및 Javadoc 영문화.
+  - **(SELECT 판별 버그 패치)** 쿼리문 처음에 블록 주석(`/* ... */`)이나 라인 주석(`-- ...`)이 위치할 때, 이를 SELECT 쿼리가 아닌 DML(UPDATE/INSERT/DELETE 등)로 잘못 인식하여 결과 그리드를 출력하지 못하던 버그를 해결하기 위해, 정규식으로 주석들을 모두 소거한 상태의 알맹이 키워드를 기준으로 SELECT/WITH 쿼리 여부를 오차 없이 식별하도록 고도화.
 * **[QueryResultView.java](file:///c:/mySts_work/sql4ibatis/src/sql4ibatis/views/QueryResultView.java)**:
   - `SashForm` 구현을 통한 결과창 레이아웃 수정 및 완성형 SQL 출력 텍스트(`sqlText`) 생성.
   - 완성형 SQL을 보여주는 하단 텍스트 창의 비율을 결과 테이블과 동일하게 **반반(50%:50%) 분할 레이아웃**(`new int[] { 50, 50 }`)으로 설정하여 화면 균형성 확보.
   - 상단 쿼리 요약 표시줄의 조회 건수 한글 단위인 `" 건"`을 영문 **`" row(s)"`**로 교환하여 타겟 이클립스 배포 환경에서의 인코딩 깨짐을 최종 방지.
   - `addMouseListener` 좌표 계산 인덱스 캡처 및 `KeyAdapter`Ctrl+C 연동을 통한 단일 셀 복사 기능 이식.
   - `updateData` 메서드 내 NULL 셀 공백 렌더링 및 배경색(`SWT.COLOR_INFO_BACKGROUND`) 설정 로직 적용.
+  - `updateData` 내에서 Executed SQL String을 화면에 표시하기 전, Windows OS의 SWT Text 컨트롤에서 줄바꿈이 정상 처리되도록 모든 개행 문자를 **`\r\n` (CRLF)** 로 일괄 정규화(Normalize) 처리하여 깨진 상자 기호가 출력되는 버그를 전격 패치.
   - Javadoc 및 인라인 주석 영문화 적용.
 * **[RunQueryHandler.java](file:///c:/mySts_work/sql4ibatis/src/sql4ibatis/handlers/RunQueryHandler.java)**:
   - 쿼리 파싱 및 DB 연동 코드를 `SqlParser`와 `DbExecutor`로 이관하여 기존 500라인 이상에서 200라인 이하로 코드 다이어트 적용.
@@ -108,6 +112,7 @@
   - 쿼리 파라미터 스캔 및 컴파일을 타기 전 에디터 도큐먼트 전체(`xmlText`)를 로드하여 `SqlParser.resolveIncludes` 를 호출해 공통 SQL 조각을 인라인 병합한 뒤 쿼리를 실행하도록 실행 파이프라인 개정.
   - 쿼리 가공 흐름 중간에 `SqlParser.unwrapForeach` 와 `SqlParser.parseChooseSql` 프로세스를 추가 주입하여 다중 조건 선택 및 루프 쿼리 완성 성능 확보.
   - 워크스페이스 전역 범위의 교차 include 파일들을 수집하는 연산을 `ProgressMonitorDialog` 기반의 비동기 흐름으로 개편하여 UI 프리징 현상을 완벽히 차단하고, 타 라이브러리/공통 프로젝트에 포함된 include 파일도 정상적으로 분석하도록 보완.
+  - **(이클립스 Resource Out of Sync 버그 해결)** 이클립스가 디스크 상의 변경점을 즉각 캐시하지 못하여 `file.getContents()` 호출 시 `CoreException` (Resource is out of sync) 에러를 뿜으며 무음 스킵되던 버그를 완벽히 해결하기 위해, 1차 수집 실패 시 `file.getLocation().toFile()` 경로의 물리 디바이스 파일을 직접 읽어들이는 강력한 2차 로드 Fallback 프로세스를 연동 구축.
 * **[DEPLOY.md](file:///c:/mySts_work/sql4ibatis/DEPLOY.md)** (NEW):
   - 타 PC 및 실 서버 환경에 플러그인 이식을 지원하기 위한 빌드(Export) 및 설치(dropins 활용) 가이드 문서 신규 제작.
 * **[MANIFEST.MF](file:///c:/mySts_work/sql4ibatis/META-INF/MANIFEST.MF)**:

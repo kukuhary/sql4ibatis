@@ -354,15 +354,32 @@ public class RunQueryHandler extends AbstractHandler {
 						String ext = file.getFileExtension();
 						if ("xml".equalsIgnoreCase(ext) || "sqlx".equalsIgnoreCase(ext)) {
 							monitor.subTask("Scanning file: " + file.getName());
+							String content = null;
+							
+							// 1. Try reading via Eclipse Resource API first
 							try (InputStream is = file.getContents();
 								 BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
-								
-								String content = reader.lines().collect(Collectors.joining("\n"));
+								content = reader.lines().collect(Collectors.joining("\n"));
+							} catch (Exception syncError) {
+								// 2. Fallback: If Out of Sync or other exception occurs, read directly from physical disk
+								org.eclipse.core.runtime.IPath location = file.getLocation();
+								if (location != null) {
+									java.io.File physFile = location.toFile();
+									if (physFile.exists() && physFile.isFile()) {
+										try (java.io.FileInputStream fis = new java.io.FileInputStream(physFile);
+											 BufferedReader reader = new BufferedReader(new InputStreamReader(fis, "UTF-8"))) {
+											content = reader.lines().collect(Collectors.joining("\n"));
+										} catch (Exception ignored) {
+										}
+									}
+								}
+							}
+							
+							if (content != null) {
 								String namespace = extractNamespace(content);
 								if (namespace != null && !namespace.isEmpty()) {
 									xmlMap.put(namespace, content);
 								}
-							} catch (Exception ignored) {
 							}
 						}
 					}

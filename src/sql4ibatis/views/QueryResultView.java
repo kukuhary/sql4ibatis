@@ -151,7 +151,9 @@ public class QueryResultView extends ViewPart {
 			}
 
 			if (sql != null) {
-				sqlText.setText(sql);
+				// Normalize line endings to \r\n (CRLF) for SWT Text control in Windows
+				String normalizedSql = sql.replace("\r\n", "\n").replace("\n", "\r\n");
+				sqlText.setText(normalizedSql);
 			} else {
 				sqlText.setText("");
 			}
