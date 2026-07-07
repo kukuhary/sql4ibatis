@@ -56,6 +56,20 @@ public class RunQueryHandler extends AbstractHandler {
 
 	private static final String HISTORY_FILE_NAME = "parameter_history.properties";
 
+	private static class CachedXmlInfo {
+		final long modificationStamp;
+		final String namespace;
+		final String content;
+
+		CachedXmlInfo(long modificationStamp, String namespace, String content) {
+			this.modificationStamp = modificationStamp;
+			this.namespace = namespace;
+			this.content = content;
+		}
+	}
+
+	private static final Map<org.eclipse.core.runtime.IPath, CachedXmlInfo> xmlCache = new java.util.concurrent.ConcurrentHashMap<>();
+
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		IEditorPart editor = HandlerUtil.getActiveEditor(event);
@@ -354,32 +368,45 @@ public class RunQueryHandler extends AbstractHandler {
 						String ext = file.getFileExtension();
 						if ("xml".equalsIgnoreCase(ext) || "sqlx".equalsIgnoreCase(ext)) {
 							monitor.subTask("Scanning file: " + file.getName());
-							String content = null;
 							
-							// 1. Try reading via Eclipse Resource API first
-							try (InputStream is = file.getContents();
-								 BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
-								content = reader.lines().collect(Collectors.joining("\n"));
-							} catch (Exception syncError) {
-								// 2. Fallback: If Out of Sync or other exception occurs, read directly from physical disk
-								org.eclipse.core.runtime.IPath location = file.getLocation();
-								if (location != null) {
-									java.io.File physFile = location.toFile();
-									if (physFile.exists() && physFile.isFile()) {
-										try (java.io.FileInputStream fis = new java.io.FileInputStream(physFile);
-											 BufferedReader reader = new BufferedReader(new InputStreamReader(fis, "UTF-8"))) {
-											content = reader.lines().collect(Collectors.joining("\n"));
-										} catch (Exception ignored) {
+							long currentStamp = file.getModificationStamp();
+							org.eclipse.core.runtime.IPath path = file.getFullPath();
+							CachedXmlInfo cached = xmlCache.get(path);
+							
+							String content = null;
+							String namespace = null;
+							
+							if (cached != null && cached.modificationStamp == currentStamp) {
+								content = cached.content;
+								namespace = cached.namespace;
+							} else {
+								// 1. Try reading via Eclipse Resource API first
+								try (InputStream is = file.getContents();
+									 BufferedReader reader = new BufferedReader(new InputStreamReader(is, "UTF-8"))) {
+									content = reader.lines().collect(Collectors.joining("\n"));
+								} catch (Exception syncError) {
+									// 2. Fallback: If Out of Sync or other exception occurs, read directly from physical disk
+									org.eclipse.core.runtime.IPath location = file.getLocation();
+									if (location != null) {
+										java.io.File physFile = location.toFile();
+										if (physFile.exists() && physFile.isFile()) {
+											try (java.io.FileInputStream fis = new java.io.FileInputStream(physFile);
+												 BufferedReader reader = new BufferedReader(new InputStreamReader(fis, "UTF-8"))) {
+												content = reader.lines().collect(Collectors.joining("\n"));
+											} catch (Exception ignored) {
+											}
 										}
 									}
 								}
+								
+								if (content != null) {
+									namespace = extractNamespace(content);
+									xmlCache.put(path, new CachedXmlInfo(currentStamp, namespace, content));
+								}
 							}
 							
-							if (content != null) {
-								String namespace = extractNamespace(content);
-								if (namespace != null && !namespace.isEmpty()) {
-									xmlMap.put(namespace, content);
-								}
+							if (content != null && namespace != null && !namespace.isEmpty()) {
+								xmlMap.put(namespace, content);
 							}
 						}
 					}
