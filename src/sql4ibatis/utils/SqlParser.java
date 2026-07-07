@@ -453,8 +453,13 @@ public class SqlParser {
 			String key = entry.getKey();
 			String val = entry.getValue();
 
-			boolean isNumeric = val.matches("-?\\d+(\\.\\d+)?");
-			String replacementForHash = isNumeric ? val : "'" + val + "'";
+			String replacementForHash;
+			if (val.startsWith("'") && val.endsWith("'")) {
+				replacementForHash = val;
+			} else {
+				boolean isNumeric = val.matches("-?\\d+(\\.\\d+)?");
+				replacementForHash = isNumeric ? val : "'" + val + "'";
+			}
 
 			resolvedSql = resolvedSql.replace("#" + key + "#", replacementForHash);
 			resolvedSql = resolvedSql.replace("#{" + key + "}", replacementForHash);

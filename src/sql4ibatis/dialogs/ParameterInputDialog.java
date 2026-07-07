@@ -29,6 +29,8 @@ public class ParameterInputDialog extends Dialog {
 	private final Map<String, String> initialValues;
 	private final Map<String, String> values = new HashMap<>();
 	private final Map<String, Text> textFields = new HashMap<>();
+	private final Map<String, Button> quoteButtons = new HashMap<>();
+	private final Set<String> manuallyToggled = new HashSet<>();
 
 	private static final int CLEAR_ALL_ID = 9999;
 
@@ -48,7 +50,7 @@ public class ParameterInputDialog extends Dialog {
 	protected Control createDialogArea(Composite parent) {
 		Composite container = (Composite) super.createDialogArea(parent);
 		
-		GridLayout layout = new GridLayout(3, false);
+		GridLayout layout = new GridLayout(4, false);
 		layout.marginHeight = 15;
 		layout.marginWidth = 15;
 		layout.verticalSpacing = 10;
@@ -57,12 +59,12 @@ public class ParameterInputDialog extends Dialog {
 		Label infoLabel = new Label(container, SWT.NONE);
 		infoLabel.setText("Please enter the parameter values to bind to the query and IF conditions.");
 		GridData infoGd = new GridData(GridData.FILL_HORIZONTAL);
-		infoGd.horizontalSpan = 3;
+		infoGd.horizontalSpan = 4;
 		infoLabel.setLayoutData(infoGd);
 
 		Label separator = new Label(container, SWT.SEPARATOR | SWT.HORIZONTAL);
 		GridData sepGd = new GridData(GridData.FILL_HORIZONTAL);
-		sepGd.horizontalSpan = 3;
+		sepGd.horizontalSpan = 4;
 		separator.setLayoutData(sepGd);
 
 		Set<String> ifBaseVars = new HashSet<>();
@@ -87,8 +89,22 @@ public class ParameterInputDialog extends Dialog {
 			text.setLayoutData(new GridData(GridData.FILL_HORIZONTAL));
 			
 			String prevValue = initialValues.get(baseVarName);
-			text.setText(prevValue != null ? prevValue : "");
-			
+			boolean defaultQuote = true;
+			String displayValue = "";
+			if (prevValue != null) {
+				if (prevValue.startsWith("'") && prevValue.endsWith("'")) {
+					displayValue = prevValue.substring(1, prevValue.length() - 1);
+					defaultQuote = true;
+					manuallyToggled.add(baseVarName);
+				} else {
+					displayValue = prevValue;
+					defaultQuote = !prevValue.matches("-?\\d+(\\.\\d+)?");
+					if (prevValue.matches("-?\\d+(\\.\\d+)?")) {
+						manuallyToggled.add(baseVarName);
+					}
+				}
+			}
+			text.setText(displayValue);
 			textFields.put(param, text);
 
 			Button clearBtn = new Button(container, SWT.PUSH);
@@ -105,8 +121,34 @@ public class ParameterInputDialog extends Dialog {
 				}
 			});
 
+			Button quoteBtn = new Button(container, SWT.CHECK);
+			quoteBtn.setText("Quote");
+			quoteBtn.setToolTipText("Wrap parameter value in single quotes (String type).");
+			quoteBtn.setSelection(defaultQuote);
+			quoteButtons.put(param, quoteBtn);
+
+			quoteBtn.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					manuallyToggled.add(baseVarName);
+					boolean isSelected = quoteBtn.getSelection();
+					for (Map.Entry<String, Button> entry : quoteButtons.entrySet()) {
+						String targetParam = entry.getKey();
+						Button targetQuoteBtn = entry.getValue();
+						if (getBaseVariableName(targetParam).equals(baseVarName)) {
+							targetQuoteBtn.setSelection(isSelected);
+						}
+					}
+				}
+			});
+
 			text.addModifyListener(e -> {
 				String currentVal = text.getText();
+				if (!manuallyToggled.contains(baseVarName)) {
+					boolean isNumeric = currentVal.matches("-?\\d+(\\.\\d+)?");
+					quoteBtn.setSelection(!isNumeric);
+				}
+
 				for (Map.Entry<String, Text> entry : textFields.entrySet()) {
 					String targetParam = entry.getKey();
 					Text targetText = entry.getValue();
@@ -119,6 +161,10 @@ public class ParameterInputDialog extends Dialog {
 					if (targetBase.equals(baseVarName)) {
 						if (!targetText.getText().equals(currentVal)) {
 							targetText.setText(currentVal);
+						}
+						Button targetQuoteBtn = quoteButtons.get(targetParam);
+						if (targetQuoteBtn != null) {
+							targetQuoteBtn.setSelection(quoteBtn.getSelection());
 						}
 					}
 				}
@@ -134,8 +180,12 @@ public class ParameterInputDialog extends Dialog {
 		clearAllBtn.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
+				manuallyToggled.clear();
 				for (Text text : textFields.values()) {
 					text.setText("");
+				}
+				for (Button btn : quoteButtons.values()) {
+					btn.setSelection(true);
 				}
 			}
 		});
@@ -152,8 +202,14 @@ public class ParameterInputDialog extends Dialog {
 	protected void okPressed() {
 		for (String param : parameters) {
 			Text text = textFields.get(param);
+			Button quoteBtn = quoteButtons.get(param);
 			if (text != null) {
-				values.put(param, text.getText().trim());
+				String plainText = text.getText().trim();
+				if (quoteBtn != null && quoteBtn.getSelection()) {
+					values.put(param, "'" + plainText + "'");
+				} else {
+					values.put(param, plainText);
+				}
 			}
 		}
 		super.okPressed();
