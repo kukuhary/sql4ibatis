@@ -62,8 +62,8 @@
    - 컴파일러 및 다른 PC 이클립스 리소스 뷰어에서의 문자열 깨짐을 원천적으로 막기 위해, 프로젝트 내의 모든 자바 소스코드 파일(`Activator.java`, `SqlParser.java`, `DbExecutor.java`, `QueryResultView.java` 등)에 하드코딩되어 있던 한글 Javadoc 설명문 및 인라인 주석들을 영문(English)으로 100% 개정 조치했습니다.
 13. **국소적 CDATA 영역 파싱 버그 해결 (ORA-00900 방지)**:
    - MyBatis 쿼리 본문 내에 부등호 등을 표현하기 위해 `<![CDATA[...]]>` 구문이 포함되어 있을 때, 쿼리 전체가 그 CDATA 내용으로 오버라이팅되어 오발췌되던 파싱 엔진 버그를 전격 수정했습니다. 쿼리 껍데기 태그만 분리한 후 쿼리 내부의 모든 CDATA 태그를 언랩(Unwrap)하도록 패치하여 원본 SQL의 형상을 유지했습니다.
-14. **MyBatis <include> 태그 동적 해석 및 인라인 치환 (프로젝트 내 교차 파일 지원)**:
-   - 쿼리 본문 내에 `<include refid="참조ID" />` 태그가 존재할 때, 현재 파일뿐만 아니라 **프로젝트 내 다른 모든 XML 및 SQLX(`.sqlx`) 확장자 파일들까지 실시간 스캔**하여 일치하는 네임스페이스 및 SQL 구문 조각(`<sql id="참조ID">... </sql>`)을 추적하고 본문에 인라인 대입 처리하는 지능형 include 리졸버를 구축했습니다. 네임스페이스 경로 매칭을 자동 지원하며 중첩된 include(Nested include) 또한 최대 5단계까지 재귀 병합을 완벽하게 보장합니다.
+14. **MyBatis <include> 태그 동적 해석 및 인라인 치환 (워크스페이스 교차 프로젝트 지원)**:
+   - 쿼리 본문 내에 `<include refid="참조ID" />` 태그가 존재할 때, 현재 단일 프로젝트뿐만 아니라 **이클립스 워크스페이스에 열려있는 다른 모든 의존 프로젝트(Multi-project / Library 프로젝트) 내부의 XML 및 SQLX(`.sqlx`) 파일들까지 실시간 순회 스캔**하여, 일치하는 네임스페이스 및 SQL 구문 조각을 추적하고 본문에 인라인 대입 처리하는 고도화된 include 리졸버를 구축했습니다. 네임스페이스 경로 매칭을 자동 지원하며 중첩된 include(Nested include) 또한 최대 5단계까지 재귀 병합을 보장합니다.
 15. **MyBatis <choose>/<when>/<otherwise> 및 <foreach> 조건절 동적 평가 지원**:
    - MyBatis의 다중 조건 태그인 `<choose>`, `<when test="...">`, `<otherwise>` 구문을 논리 평가하여, 참인 조건의 분기문만 남겨두고 나머지는 자동 탈락시키는 동적 분기 해석기를 탑재했습니다. 또한 배열이나 컬렉션을 순회하는 `<foreach>` 태그의 껍데기를 날리고 내부 변수를 기저 수집 변수명으로 자동 환원해 주는 언랩(Unwrap) 변환 프로세스를 이식하여 오라클 SQL 동작성을 극대화했습니다.
 16. **프로젝트 내 XML/SQLX 탐색 시 ProgressMonitorDialog 프로그레시브 팝업 연동 및 최적화**:
@@ -107,7 +107,7 @@
   - 이클립스 기본 XML Editor 등 탭이 나뉜 `MultiPageEditor` 환경에서도 리플렉션과 어댑터를 활용해 기저의 실제 `ITextEditor`를 탐색하는 `getTextEditor` 헬퍼 메서드를 이식하여 에디터 타입 불일치 경고를 방지.
   - 쿼리 파라미터 스캔 및 컴파일을 타기 전 에디터 도큐먼트 전체(`xmlText`)를 로드하여 `SqlParser.resolveIncludes` 를 호출해 공통 SQL 조각을 인라인 병합한 뒤 쿼리를 실행하도록 실행 파이프라인 개정.
   - 쿼리 가공 흐름 중간에 `SqlParser.unwrapForeach` 와 `SqlParser.parseChooseSql` 프로세스를 추가 주입하여 다중 조건 선택 및 루프 쿼리 완성 성능 확보.
-  - 프로젝트 내 교차 include 파일들을 수집하는 연산을 `ProgressMonitorDialog` 기반의 비동기 흐름으로 개편하여 UI 프리징 현상을 완벽히 차단하고 실시간 스캔 피드백 및 작업 취소 기능 적용.
+  - 워크스페이스 전역 범위의 교차 include 파일들을 수집하는 연산을 `ProgressMonitorDialog` 기반의 비동기 흐름으로 개편하여 UI 프리징 현상을 완벽히 차단하고, 타 라이브러리/공통 프로젝트에 포함된 include 파일도 정상적으로 분석하도록 보완.
 * **[DEPLOY.md](file:///c:/mySts_work/sql4ibatis/DEPLOY.md)** (NEW):
   - 타 PC 및 실 서버 환경에 플러그인 이식을 지원하기 위한 빌드(Export) 및 설치(dropins 활용) 가이드 문서 신규 제작.
 * **[MANIFEST.MF](file:///c:/mySts_work/sql4ibatis/META-INF/MANIFEST.MF)**:

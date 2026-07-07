@@ -16,6 +16,8 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.resources.IResourceVisitor;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -105,7 +107,6 @@ public class RunQueryHandler extends AbstractHandler {
 		}
 
 		// Collect all project XML files content to resolve cross-file includes (using progress dialog ONLY if query contains <include)
-		IFile activeFile = textEditor.getEditorInput().getAdapter(IFile.class);
 		Map<String, String> xmlContentsMap = new HashMap<>();
 
 		if (rawSql.contains("<include")) {
@@ -113,8 +114,8 @@ public class RunQueryHandler extends AbstractHandler {
 				new org.eclipse.jface.dialogs.ProgressMonitorDialog(HandlerUtil.getActiveShell(event)).run(true, true, new IRunnableWithProgress() {
 					@Override
 					public void run(IProgressMonitor monitor) throws InvocationTargetException, InterruptedException {
-						monitor.beginTask("Scanning MyBatis XML/SQLX files in project...", IProgressMonitor.UNKNOWN);
-						Map<String, String> result = collectProjectXmlContentsWithMonitor(activeFile, monitor);
+						monitor.beginTask("Scanning MyBatis XML/SQLX files in workspace...", IProgressMonitor.UNKNOWN);
+						Map<String, String> result = collectWorkspaceXmlContentsWithMonitor(monitor);
 						xmlContentsMap.putAll(result);
 						monitor.done();
 					}
@@ -323,25 +324,29 @@ public class RunQueryHandler extends AbstractHandler {
 	}
 
 	/**
-	 * Scans all XML and SQLX files in the current active file's project with a progress monitor to support cancel operations.
+	 * Scans all XML and SQLX files in the entire workspace with a progress monitor to support cancel operations.
 	 */
-	private Map<String, String> collectProjectXmlContentsWithMonitor(IFile activeFile, IProgressMonitor monitor) {
+	private Map<String, String> collectWorkspaceXmlContentsWithMonitor(IProgressMonitor monitor) {
 		Map<String, String> xmlMap = new HashMap<>();
-		if (activeFile == null) {
-			return xmlMap;
-		}
-
-		IProject project = activeFile.getProject();
-		if (project == null || !project.isAccessible()) {
+		IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
+		if (root == null) {
 			return xmlMap;
 		}
 
 		try {
-			project.accept(new IResourceVisitor() {
+			root.accept(new IResourceVisitor() {
 				@Override
 				public boolean visit(IResource resource) throws org.eclipse.core.runtime.CoreException {
 					if (monitor.isCanceled()) {
 						throw new OperationCanceledException();
+					}
+
+					// Skip closed projects to avoid errors and speed up scanning
+					if (resource instanceof IProject) {
+						IProject proj = (IProject) resource;
+						if (!proj.isOpen()) {
+							return false;
+						}
 					}
 
 					if (resource instanceof IFile) {
