@@ -111,6 +111,7 @@
   - `addMouseListener` 좌표 계산 인덱스 캡처 및 `KeyAdapter`Ctrl+C 연동을 통한 단일 셀 복사 기능 이식.
   - `updateData` 메서드 내 NULL 셀 공백 렌더링 및 배경색(`SWT.COLOR_INFO_BACKGROUND`) 설정 로직 적용.
   - `updateData` 내에서 Executed SQL String을 화면에 표시하기 전, Windows OS의 SWT Text 컨트롤에서 줄바꿈이 정상 처리되도록 모든 개행 문자를 **`\r\n` (CRLF)** 로 일괄 정규화(Normalize) 처리하여 깨진 상자 기호가 출력되는 버그를 전격 패치.
+  - **(컬럼 헤더 밑줄 렌더링 패치)** 테이블 헤더의 배경색(`setHeaderBackground`)을 강제로 지정하면서 이클립스 CSS 테마 엔진이 개입하여 특정 컬럼 헤더 텍스트들을 파란색 밑줄 하이퍼링크로 그리던 오작동을 인지하고, 헤더 배경색 지정을 비활성화해 윈도우 기본 표준 입체 헤더 렌더러를 정상 복원 완료.
   - Javadoc 및 인라인 주석 영문화 적용.
 * **[RunQueryHandler.java](file:///c:/mySts_work/sql4ibatis/src/sql4ibatis/handlers/RunQueryHandler.java)**:
   - 쿼리 파싱 및 DB 연동 코드를 `SqlParser`와 `DbExecutor`로 이관하여 기존 500라인 이상에서 200라인 이하로 코드 다이어트 적용.
