@@ -160,10 +160,10 @@ public class QueryResultView extends ViewPart {
 
 			if (queryId != null && !queryId.trim().isEmpty()) {
 				queryIdLabel.setText(String.format("Query ID: %s  |  Loaded Rows: %d row(s)", queryId, rowCount));
-				setPartName("Query Result - " + queryId);
+				setPartName("SQL Result - " + queryId);
 			} else {
 				queryIdLabel.setText(String.format("Query ID: (Direct / Dragged SQL)  |  Loaded Rows: %d row(s)", rowCount));
-				setPartName("Query Result");
+				setPartName("SQL Result");
 			}
 
 			if (sql != null) {

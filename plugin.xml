@@ -49,7 +49,7 @@
             category="sql4ibatis"
             class="sql4ibatis.views.QueryResultView"
             id="sql4ibatis.views.QueryResultView"
-            name="Query Result View"
+            name="SQL Result"
             icon="icons/query_result.png"
             restorable="true">
       </view>
