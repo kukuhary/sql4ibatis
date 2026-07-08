@@ -56,8 +56,9 @@ public class QueryResultView extends ViewPart {
 		table.setLinesVisible(true);
 		
 		grayColor = new Color(table.getDisplay(), 220, 220, 220);
-		// Disabled to prevent Eclipse/OS theme from rendering headers as blue underlined hyperlinks
-		// table.setHeaderBackground(grayColor);
+		// Restore gray background and force black foreground to clear Windows 3D highlight bevel (white lines)
+		table.setHeaderBackground(grayColor);
+		table.setHeaderForeground(table.getDisplay().getSystemColor(SWT.COLOR_BLACK));
 		table.addDisposeListener(e -> {
 			if (grayColor != null && !grayColor.isDisposed()) {
 				grayColor.dispose();
