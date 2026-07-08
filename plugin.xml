@@ -50,6 +50,7 @@
             class="sql4ibatis.views.QueryResultView"
             id="sql4ibatis.views.QueryResultView"
             name="Query Result View"
+            icon="icons/query_result.png"
             restorable="true">
       </view>
    </extension>
