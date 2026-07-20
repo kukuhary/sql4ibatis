@@ -55,62 +55,25 @@
       </view>
    </extension>
 
-   <!-- 5단계: Ctrl + / 주석 토글 기능 정의 (xml, sqlx 확장자에서만 동작) -->
-   <!-- 다양한 에디터(기본 텍스트 에디터, WST/SSE XML 에디터 등)에서 모두 동작하도록 모든 토글 주석 커맨드 ID에 핸들러 매핑 -->
+   <!-- 5단계: Ctrl + / 주석 토글 기능 정의 (핸들러 자체는 항상 수신하며, 내부 자바 로직에서 확장자 판별 후 동작 위임) -->
    <extension
          point="org.eclipse.ui.handlers">
       <!-- 1. 기본 텍스트 에디터 주석 커맨드 -->
       <handler
             class="sql4ibatis.handlers.ToggleCommentHandler"
             commandId="org.eclipse.ui.edit.text.toggleComment">
-         <activeWhen>
-            <with variable="activeEditorInput">
-               <adapt type="org.eclipse.core.resources.IFile">
-                  <or>
-                     <test property="org.eclipse.core.resources.extension" value="xml"/>
-                     <test property="org.eclipse.core.resources.extension" value="XML"/>
-                     <test property="org.eclipse.core.resources.extension" value="sqlx"/>
-                     <test property="org.eclipse.core.resources.extension" value="SQLX"/>
-                  </or>
-               </adapt>
-            </with>
-         </activeWhen>
       </handler>
       
       <!-- 2. WST/SSE 구조화 텍스트 에디터(XML 에디터) 주석 커맨드 -->
       <handler
             class="sql4ibatis.handlers.ToggleCommentHandler"
             commandId="org.eclipse.wst.sse.ui.toggle.comment">
-         <activeWhen>
-            <with variable="activeEditorInput">
-               <adapt type="org.eclipse.core.resources.IFile">
-                  <or>
-                     <test property="org.eclipse.core.resources.extension" value="xml"/>
-                     <test property="org.eclipse.core.resources.extension" value="XML"/>
-                     <test property="org.eclipse.core.resources.extension" value="sqlx"/>
-                     <test property="org.eclipse.core.resources.extension" value="SQLX"/>
-                  </or>
-               </adapt>
-            </with>
-         </activeWhen>
       </handler>
       
       <!-- 3. XML 전용 뷰/에디터 주석 커맨드 -->
       <handler
             class="sql4ibatis.handlers.ToggleCommentHandler"
             commandId="org.eclipse.wst.xml.ui.toggle.comment">
-         <activeWhen>
-            <with variable="activeEditorInput">
-               <adapt type="org.eclipse.core.resources.IFile">
-                  <or>
-                     <test property="org.eclipse.core.resources.extension" value="xml"/>
-                     <test property="org.eclipse.core.resources.extension" value="XML"/>
-                     <test property="org.eclipse.core.resources.extension" value="sqlx"/>
-                     <test property="org.eclipse.core.resources.extension" value="SQLX"/>
-                  </or>
-               </adapt>
-            </with>
-         </activeWhen>
       </handler>
    </extension>
 </plugin>

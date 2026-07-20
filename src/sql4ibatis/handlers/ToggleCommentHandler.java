@@ -11,10 +11,14 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.texteditor.ITextEditor;
 
+import org.eclipse.jface.action.IAction;
+import org.eclipse.ui.IFileEditorInput;
+
 /**
  * Handles the custom comment toggle action (Ctrl + /) for XML and SQLX files.
  * Inserts "-- " at the absolute beginning of each selected line to comment it out,
  * and removes "-- " or "--" to uncomment.
+ * For all other files, delegates to the native comment action of the editor.
  */
 public class ToggleCommentHandler extends AbstractHandler {
 
@@ -26,11 +30,39 @@ public class ToggleCommentHandler extends AbstractHandler {
 		}
 
 		ITextEditor textEditor = (ITextEditor) editor;
+
+		// 1. Determine if the active file has .xml or .sqlx extension
+		boolean isSqlTargetFile = false;
+		if (textEditor.getEditorInput() instanceof IFileEditorInput) {
+			org.eclipse.core.resources.IFile file = ((IFileEditorInput) textEditor.getEditorInput()).getFile();
+			if (file != null) {
+				String ext = file.getFileExtension();
+				if ("xml".equalsIgnoreCase(ext) || "sqlx".equalsIgnoreCase(ext)) {
+					isSqlTargetFile = true;
+				}
+			}
+		}
+
+		if (isSqlTargetFile) {
+			// Execute custom -- comment toggling
+			executeCustomToggle(textEditor);
+		} else {
+			// Delegate to native toggle comment action of the editor
+			IAction nativeAction = textEditor.getAction("ToggleComment");
+			if (nativeAction != null && nativeAction.isEnabled()) {
+				nativeAction.run();
+			}
+		}
+
+		return null;
+	}
+
+	private void executeCustomToggle(ITextEditor textEditor) {
 		IDocument doc = textEditor.getDocumentProvider().getDocument(textEditor.getEditorInput());
 		ISelection selection = textEditor.getSelectionProvider().getSelection();
 
 		if (doc == null || !(selection instanceof ITextSelection)) {
-			return null;
+			return;
 		}
 
 		ITextSelection textSelection = (ITextSelection) selection;
@@ -88,7 +120,5 @@ public class ToggleCommentHandler extends AbstractHandler {
 		} catch (BadLocationException e) {
 			e.printStackTrace();
 		}
-
-		return null;
 	}
 }

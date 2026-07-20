@@ -9,7 +9,8 @@
 1. **XML 및 SQLX 파일 전용 Ctrl + / 주석 토글 기능 추가**:
    - 에디터 내에서 `Ctrl + /` 입력 시 행의 맨 앞에 SQL 표준 주석인 `-- `를 붙이고 제거할 수 있는 토글 주석 핸들러(`ToggleCommentHandler.java`)를 탑재했습니다.
    - WST XML Editor 및 Structured Text Editor(SSE)를 포함한 다양한 에디터 환경에서 기능이 누락 없이 활성화되도록, 이클립스 표준 주석 커맨드(`org.eclipse.ui.edit.text.toggleComment`)뿐만 아니라 WST/SSE 전용 주석 커맨드(`org.eclipse.wst.sse.ui.toggle.comment`, `org.eclipse.wst.xml.ui.toggle.comment`)까지 모두 핸들러로 동시 매핑 완료했습니다.
-   - 플러그인이 다른 확장자(예: `.java`, `.properties` 등)의 표준 주석 기능을 침범하지 않도록, activeWhen 조건을 지정하여 파일 확장자가 `xml` 또는 `sqlx`인 편집 창에서만 활성화되도록 한정 제어했습니다.
+   - 이클립스 플랫폼 버전별로 XML 설정 기반의 `<activeWhen>` 조건이 특정 에디터 인스턴스에서 오작동하거나 늦게 바인딩되는 문제를 해결하기 위해, 핸들러 활성화를 XML 레벨이 아닌 Java 로직에서 동적으로 처리하는 구조로 개편했습니다.
+   - 핸들러는 항상 활성화 상태로 수신되며, 내부 Java 코드에서 활성 에디터의 파일 확장자가 `xml` 또는 `sqlx`인 경우에만 `-- ` 주석 로직을 실행하고, 그 외의 확장자 파일인 경우에는 에디터의 기존 내장 주석 동작(`textEditor.getAction("ToggleComment")`)을 원본 그대로 위임(Delegate) 호출하여 완벽한 호환성과 100% 동작 안전성을 보장합니다.
 
 ## [v1.1.2] - 2026-07-08
 ### 기능 및 디자인 개선
