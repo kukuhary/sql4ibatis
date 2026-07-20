@@ -11,6 +11,7 @@
    - WST XML Editor 및 Structured Text Editor(SSE)를 포함한 다양한 에디터 환경에서 기능이 누락 없이 활성화되도록, 이클립스 표준 주석 커맨드(`org.eclipse.ui.edit.text.toggleComment`)뿐만 아니라 WST/SSE 전용 주석 커맨드(`org.eclipse.wst.sse.ui.toggle.comment`, `org.eclipse.wst.xml.ui.toggle.comment`)까지 모두 핸들러로 동시 매핑 완료했습니다.
    - 이클립스 플랫폼 버전별로 XML 설정 기반의 `<activeWhen>` 조건이 특정 에디터 인스턴스에서 오작동하거나 늦게 바인딩되는 문제를 해결하기 위해, 핸들러 활성화를 XML 레벨이 아닌 Java 로직에서 동적으로 처리하는 구조로 개편했습니다.
    - 핸들러는 항상 활성화 상태로 수신되며, 내부 Java 코드에서 활성 에디터의 파일 확장자가 `xml` 또는 `sqlx`인 경우에만 `-- ` 주석 로직을 실행하고, 그 외의 확장자 파일인 경우에는 에디터의 기존 내장 주석 동작(`textEditor.getAction("ToggleComment")`)을 원본 그대로 위임(Delegate) 호출하여 완벽한 호환성과 100% 동작 안전성을 보장합니다.
+   - `org.eclipse.ui.ide` 플러그인 의존성 부재 환경에서 `org.eclipse.ui.IFileEditorInput` 클래스를 찾지 못해 빌드 시 발생하는 컴파일 오류(`The import org.eclipse.ui.IFileEditorInput cannot be resolved`)를 선제적으로 조치하기 위해, `IFileEditorInput` 참조 코드를 완전 제거했습니다. 대신, 모든 이클립스 에디터 입력에서 공통 지원되는 `IEditorInput.getName()` 문자열의 확장자 비교 방식으로 전면 교체하여 플러그인의 무의존성 및 안전성을 확보했습니다.
 
 ## [v1.1.2] - 2026-07-08
 ### 기능 및 디자인 개선

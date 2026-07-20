@@ -12,7 +12,6 @@ import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.texteditor.ITextEditor;
 
 import org.eclipse.jface.action.IAction;
-import org.eclipse.ui.IFileEditorInput;
 
 /**
  * Handles the custom comment toggle action (Ctrl + /) for XML and SQLX files.
@@ -31,13 +30,13 @@ public class ToggleCommentHandler extends AbstractHandler {
 
 		ITextEditor textEditor = (ITextEditor) editor;
 
-		// 1. Determine if the active file has .xml or .sqlx extension
+		// 1. Determine if the active file has .xml or .sqlx extension via editor input name
 		boolean isSqlTargetFile = false;
-		if (textEditor.getEditorInput() instanceof IFileEditorInput) {
-			org.eclipse.core.resources.IFile file = ((IFileEditorInput) textEditor.getEditorInput()).getFile();
-			if (file != null) {
-				String ext = file.getFileExtension();
-				if ("xml".equalsIgnoreCase(ext) || "sqlx".equalsIgnoreCase(ext)) {
+		if (textEditor.getEditorInput() != null) {
+			String name = textEditor.getEditorInput().getName();
+			if (name != null) {
+				String lower = name.toLowerCase();
+				if (lower.endsWith(".xml") || lower.endsWith(".sqlx")) {
 					isSqlTargetFile = true;
 				}
 			}
