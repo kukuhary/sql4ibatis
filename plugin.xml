@@ -55,25 +55,30 @@
       </view>
    </extension>
 
-   <!-- 5단계: Ctrl + / 주석 토글 기능 정의 (핸들러 자체는 항상 수신하며, 내부 자바 로직에서 확장자 판별 후 동작 위임) -->
+   <!-- 5단계: Ctrl + / 주석 토글 기능 정의 (커스텀 커맨드로 등록하여 바인딩 충돌 우회 및 우선순위 획득) -->
+   <extension
+         point="org.eclipse.ui.commands">
+      <command
+            id="sql4ibatis.commands.toggleComment"
+            name="Toggle SQL Comment">
+      </command>
+   </extension>
+
    <extension
          point="org.eclipse.ui.handlers">
-      <!-- 1. 기본 텍스트 에디터 주석 커맨드 -->
       <handler
             class="sql4ibatis.handlers.ToggleCommentHandler"
-            commandId="org.eclipse.ui.edit.text.toggleComment">
+            commandId="sql4ibatis.commands.toggleComment">
       </handler>
-      
-      <!-- 2. WST/SSE 구조화 텍스트 에디터(XML 에디터) 주석 커맨드 -->
-      <handler
-            class="sql4ibatis.handlers.ToggleCommentHandler"
-            commandId="org.eclipse.wst.sse.ui.toggle.comment">
-      </handler>
-      
-      <!-- 3. XML 전용 뷰/에디터 주석 커맨드 -->
-      <handler
-            class="sql4ibatis.handlers.ToggleCommentHandler"
-            commandId="org.eclipse.wst.xml.ui.toggle.comment">
-      </handler>
+   </extension>
+
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="sql4ibatis.commands.toggleComment"
+            contextId="org.eclipse.ui.textEditorScope"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="M1+/">
+      </key>
    </extension>
 </plugin>
